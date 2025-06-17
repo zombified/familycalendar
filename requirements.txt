@@ -1,0 +1,6 @@
+-e .
+
+uvicorn
+caldav
+icalendar
+recuring-ical-events
