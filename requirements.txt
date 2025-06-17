@@ -3,4 +3,4 @@
 uvicorn
 caldav
 icalendar
-recuring-ical-events
+recurring-ical-events

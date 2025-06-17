@@ -13,7 +13,7 @@ dependencies = [
   # calendaring
   "caldav",
   "icalendar",
-  "recuring-ical-events",
+  "recurring-ical-events",
 
   # templating
   #"jinja2",
