@@ -1,0 +1,5 @@
+dev.toml
+env
+*.pyc
+*.pyo
+__pycache__

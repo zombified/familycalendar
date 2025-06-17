@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "familycal"
+version = "0.1.0"
+
+dependencies = [
+  # asgi + http parsing/etc
+  "uvicorn",
+
+  # calendaring
+  "caldav",
+  "icalendar",
+  "recuring-ical-events",
+
+  # templating
+  #"jinja2",
+]
+
+[project.optional-dependencies]
+
+[project.scripts]
+familycal = "familycal:run"
+
+[tool.pip-tools]
+generate_hashes = true
+
+[template.plugins.default]
+src-layout = true

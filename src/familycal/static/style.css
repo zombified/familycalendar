@@ -1,0 +1,28 @@
+body {
+  padding: 10px;
+}
+
+
+.extramenu button {
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+.extramenu .title {
+  min-width: 300px;
+  vertical-align: middle;
+  line-height: 32px;
+  font-weight: bolder;
+  font-size: 24px;
+}
+
+
+.row {
+  display: flex;
+}
+
+.col {
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 100%;
+}
