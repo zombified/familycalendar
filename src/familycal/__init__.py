@@ -37,6 +37,9 @@ STATIC_PATH = r"^/static/(.+)$"
 
 
 def gen_calendar_cache():
+    logger.info("generating calendar cache...")
+    st = datetime.datetime.now()
+
     for calname in CALENDAR_SYNC.keys():
         timezones_cache = []
         calendar = icalendar.Calendar()
@@ -55,6 +58,10 @@ def gen_calendar_cache():
             calendar.add_component(event)
 
         CALENDAR_CACHE[calname] = calendar
+
+    en = datetime.datetime.now()
+    td = en - st
+    logger.info(f"... took {td.seconds}s")
 
 
 @sys_route("static", STATIC_PATH)
@@ -153,15 +160,22 @@ async def events(scope):
 
 @sys_route("index", r"^/$")
 async def index(scope):
-    baseurl = config.get("app", {}).get("baseurl", None)
+    appconfig = config.get("app", {})
+
+    baseurl = appconfig.get("baseurl", None)
     if baseurl is None:
         logger.error("baseurl not configured")
         return plaintext_response(500, [], b"")
 
-    familyname = config.get("app", {}).get("familyname", "").strip()
+    familyname = appconfig.get("familyname", "").strip()
     familynamesp = ""
     if len(familyname) > 0:
         familynamesp = f"{familyname} "
+
+    auto_daynight = appconfig.get("auto_daynight", False)
+    daystart = appconfig.get("daystart", 6)
+    dayend = appconfig.get("dayend", 18)
+
     html = f"""<html>
 <head>
   <title>{familynamesp}Family Calendar</title>
@@ -183,18 +197,32 @@ async def index(scope):
     <div class='ec-center'></div>
     <div class='ec-end'>
       <div class='ec-button-group'>
-        <button class='ec-button' onclick='calendar_sync("{baseurl}")'>sync</button>
-        <button class='ec-button' onclick='calendar_refresh()'>refresh</button>
+        <button class='ec-button' onclick='calendar_update("{baseurl}")'>&#8635;</button>
+        <button class='ec-button' onclick='document.body.classList.toggle("ec-dark")'>&#9788;</button>
       </div>
     </div>
   </nav>
   <div id='ecdiv'></div>
   <script>
+  var auto_daynight = {'true' if auto_daynight else 'false'};
+  var daystart = {daystart};
+  var dayend = {dayend};
   var ec = EventCalendar.create(document.getElementById("ecdiv"), {{
       view: "timeGridWeek",
       scrollTime: "05:00:00",
       nowIndicator: true,
       selectable: false,
+      locale: "en-US",
+      dayHeaderFormat: {{
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+      }},
+      eventTimeFormat: {{
+          hour12: true,
+          hour: "numeric",
+          minute: "numeric"
+      }},
       headerToolbar: {{
           start: "prev,next today",
           center: "title",
@@ -208,13 +236,27 @@ async def index(scope):
       }},
   }});
 
-  // update calendar every 10 minutes
-  function update_calendar() {{
-    calendar_sync("{baseurl}");
-    calendar_refresh();
-  }}
   window.onload = function() {{
-      setInterval(update_calendar, 600000);
+    // update calendar every 10 minutes
+    setInterval(() => {{
+      calendar_sync("{baseurl}");
+      calendar_refresh();
+    }} , 600000);
+
+    // we want to start checking day/night on the next hour
+    let dt = new Date();
+    const m = dt.getMinutes();
+    const s = dt.getSeconds();
+    const ms = dt.getMilliseconds();
+    const ms_until = ((60 - m) * 60 * 1000) - (s * 1000) - ms;
+    setTimeout(() => {{
+        calendar_auto_daynight(auto_daynight, daystart, dayend);
+        setInterval(calendar_auto_daynight, 60 * 60 * 1000, [
+            auto_daynight,
+            daystart,
+            dayend,
+        ]);
+    }}, ms_until)
   }};
   </script>
 </body>
@@ -232,7 +274,8 @@ def startup():
         # to re-cache. Let another operation perform a sync
         return
 
-    logger.info("generating calendar cache...")
+    logger.info("syncing calendars...")
+    st = datetime.datetime.now()
 
     calendars_to_include = config.get("calendars", {}).get("include", [])
 
@@ -245,11 +288,19 @@ def startup():
         for davcal in principal.calendars():
             # skipping the ones not configured to be fetched
             if davcal.name not in calendars_to_include:
+                logger.warning(f"calendar '{davcal.name}' not found in inclusion list")
                 continue
 
-            logger.info(f"-> caching... {davcal.name}")
-
+            logger.info(f"-> syncing: {davcal.name}")
+            st2 = datetime.datetime.now()
             CALENDAR_SYNC[davcal.name] = davcal.objects(load_objects=True)
+            en2 = datetime.datetime.now()
+            td2 = en2 - st2
+            logger.info(f"-->--> took {td2.seconds}s for {davcal.name}")
+
+    en = datetime.datetime.now()
+    td = en - st
+    logger.info(f"took {td.seconds}s total")
 
     gen_calendar_cache()
 

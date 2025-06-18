@@ -1,5 +1,6 @@
 body {
-  padding: 10px;
+  padding: 20px 50px;
+  font-family: verdana;
 }
 
 
@@ -9,7 +10,7 @@ body {
 }
 
 .extramenu .title {
-  min-width: 300px;
+  min-width: 400px;
   vertical-align: middle;
   line-height: 32px;
   font-weight: bolder;
@@ -25,4 +26,9 @@ body {
   flex: 1 1 0%;
   min-width: 0;
   max-width: 100%;
+}
+
+body.ec-dark {
+  background-color: black;
+  color: white;
 }

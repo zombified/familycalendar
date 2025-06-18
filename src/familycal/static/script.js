@@ -17,3 +17,23 @@ function calendar_sync(baseurl) {
 function calendar_refresh() {
   ec.refetchEvents();
 }
+
+function calendar_update(baseurl) {
+  calendar_sync(baseurl);
+  calendar_refresh();
+}
+
+function calendar_auto_daynight(auto_daynight, daystart, dayend) {
+  if(!auto_daynight) {
+    return;
+  }
+  let hr = (new Date()).getHours();
+  if(hr >= daystart && hr <= dayend) {
+    // day mode
+    document.body.classList.remove("ec-dark")
+  }
+  else {
+    // night mode
+    document.body.classList.add("ec-dark")
+  }
+}

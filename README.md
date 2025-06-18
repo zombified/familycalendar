@@ -78,3 +78,11 @@ formatter="simple"
 [logging.formatters.simple]
 format="%(asctime)s (%(name)s) [%(levelname)s] %(message)s"
 ```
+
+
+# TODO's
+
+- [ ] in-app configurable 24hr/12hr time
+- [ ] in-app configurable date formats
+- [ ] "screen saver" mode to flip through images
+- [ ] access logs should have timestamps
